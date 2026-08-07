@@ -542,6 +542,8 @@ if [[ "$ONSCREEN_KEYBOARD" = true && -n "$SCREEN_WIDTH" && -n "$SCREEN_HEIGHT" ]
         fi
     fi
     set -e
+    
+    export NO_AT_BRIDGE=1
 
     bashio::log.info "Starting Onboard onscreen keyboard"
     onboard &
