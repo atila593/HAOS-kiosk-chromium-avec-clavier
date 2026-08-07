@@ -487,12 +487,6 @@ read -r SCREEN_WIDTH SCREEN_HEIGHT < <(
     sed -n "s/^$OUTPUT_NAME connected.* \([0-9]\+\)x\([0-9]\+\)+.*$/\1 \2/p"
 )
 
-if [[ -n "$SCREEN_WIDTH" && -n "$SCREEN_HEIGHT" ]]; then
-    bashio::log.info "Screen: Width=$SCREEN_WIDTH  Height=$SCREEN_HEIGHT"
-else
-    bashio::log.error "Could not determine screen size for output $OUTPUT_NAME"
-fi
-
 if [[ "$ONSCREEN_KEYBOARD" = true && -n "$SCREEN_WIDTH" && -n "$SCREEN_HEIGHT" ]]; then
     if (( SCREEN_WIDTH >= SCREEN_HEIGHT )); then
         MAX_DIM=$SCREEN_WIDTH
@@ -517,42 +511,37 @@ if [[ "$ONSCREEN_KEYBOARD" = true && -n "$SCREEN_WIDTH" && -n "$SCREEN_HEIGHT" ]
     PORT_Y_OFFSET=$(( MAX_DIM - PORT_HEIGHT ))
     PORT_X_OFFSET=$(( (MIN_DIM - PORT_WIDTH) / 2 ))
 
-    dconf write /org/onboard/layout "'/usr/share/onboard/layouts/Small.onboard'"
-    dconf write /org/onboard/theme "'/usr/share/onboard/themes/Blackboard.theme'"
-    dconf write /org/onboard/theme-settings/color-scheme "'/usr/share/onboard/themes/Charcoal.colors'"
-    dconf write /org/onboard/keyboard/show-click-buttons true
+    # Désactivation temporaire des erreurs strictes pour dconf (absence de D-Bus)
+    set +e
+    dconf write /org/onboard/layout "'/usr/share/onboard/layouts/Small.onboard'" 2>/dev/null || true
+    dconf write /org/onboard/theme "'/usr/share/onboard/themes/Blackboard.theme'" 2>/dev/null || true
+    dconf write /org/onboard/theme-settings/color-scheme "'/usr/share/onboard/themes/Charcoal.colors'" 2>/dev/null || true
+    dconf write /org/onboard/keyboard/show-click-buttons true 2>/dev/null || true
 
-    dconf write /org/onboard/auto-show/enabled true
-    dconf write /org/onboard/auto-show/tablet-mode-detection-enabled false
-    dconf write /org/onboard/window/force-to-top true
-    gsettings set org.gnome.desktop.interface toolkit-accessibility true
+    dconf write /org/onboard/auto-show/enabled true 2>/dev/null || true
+    dconf write /org/onboard/auto-show/tablet-mode-detection-enabled false 2>/dev/null || true
+    dconf write /org/onboard/window/force-to-top true 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface toolkit-accessibility true 2>/dev/null || true
 
-    dconf write /org/onboard/window/landscape/height "$LAND_HEIGHT"
-    dconf write /org/onboard/window/landscape/width "$LAND_WIDTH"
-    dconf write /org/onboard/window/landscape/x "$LAND_X_OFFSET"
-    dconf write /org/onboard/window/landscape/y "$LAND_Y_OFFSET"
+    dconf write /org/onboard/window/landscape/height "$LAND_HEIGHT" 2>/dev/null || true
+    dconf write /org/onboard/window/landscape/width "$LAND_WIDTH" 2>/dev/null || true
+    dconf write /org/onboard/window/landscape/x "$LAND_X_OFFSET" 2>/dev/null || true
+    dconf write /org/onboard/window/landscape/y "$LAND_Y_OFFSET" 2>/dev/null || true
 
-    dconf write /org/onboard/window/portrait/height "$PORT_HEIGHT"
-    dconf write /org/onboard/window/portrait/width "$PORT_WIDTH"
-    dconf write /org/onboard/window/portrait/x "$PORT_X_OFFSET"
-    dconf write /org/onboard/window/portrait/y "$PORT_Y_OFFSET"
+    dconf write /org/onboard/window/portrait/height "$PORT_HEIGHT" 2>/dev/null || true
+    dconf write /org/onboard/window/portrait/width "$PORT_WIDTH" 2>/dev/null || true
+    dconf write /org/onboard/window/portrait/x "$PORT_X_OFFSET" 2>/dev/null || true
+    dconf write /org/onboard/window/portrait/y "$PORT_Y_OFFSET" 2>/dev/null || true
 
     if [ -f "$ONBOARD_CONFIG_FILE" ]; then
         if [ "$SAVE_ONSCREEN_CONFIG" = true ]; then
             bashio::log.info "Restoring Onboard configuration from '$ONBOARD_CONFIG_FILE'"
-            dconf load /org/onboard/ < "$ONBOARD_CONFIG_FILE"
+            dconf load /org/onboard/ < "$ONBOARD_CONFIG_FILE" 2>/dev/null || true
         else
             rm -f "$ONBOARD_CONFIG_FILE"
         fi
     fi
-
-    LOG_MSG=$(
-        echo "Onboard keyboard initialized for: $OUTPUT_NAME (${SCREEN_WIDTH}x${SCREEN_HEIGHT}) [$ORIENTATION]"
-        echo "  Appearance: Layout=$(dconf read /org/onboard/layout)  Theme=$(dconf read /org/onboard/theme)  Color-Scheme=$(dconf read /org/onboard/theme-settings/color-scheme)"
-        echo "  Behavior: Auto-Show=$(dconf read /org/onboard/auto-show/enabled)  Tablet-Mode=$(dconf read /org/onboard/auto-show/tablet-mode-detection-enabled)  Force-to-Top=$(dconf read /org/onboard/window/force-to-top)"
-        echo "  Geometry: Height=$(dconf read /org/onboard/window/${ORIENTATION}/height)  Width=$(dconf read /org/onboard/window/${ORIENTATION}/width)  X-Offset=$(dconf read /org/onboard/window/${ORIENTATION}/x)  Y-Offset=$(dconf read /org/onboard/window/${ORIENTATION}/y)"
-    )
-    bashio::log.info "$LOG_MSG"
+    set -e
 
     bashio::log.info "Starting Onboard onscreen keyboard"
     onboard &
