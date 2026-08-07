@@ -63,7 +63,7 @@ bashio::log.info "######## Starting HAOSKiosk (Chromium Edition) ########"
 # bashio::log.info "$(date) [Version: ${ADDON_VERSION:-unknown}]"
 bashio::log.info "$(uname -a)"
 # ha_info=$(bashio::info)
-bashio::log.info "Core=$(echo "$ha_info" | jq -r '.homeassistant')  HAOS=$(echo "$ha_info" | jq -r '.hassos')  MACHINE=$(echo "$ha_info" | jq -r '.machine')  ARCH=$(echo "$ha_info" | jq -r '.arch')"
+# bashio::log.info "Core=$(echo "$ha_info" | jq -r '.homeassistant')  HAOS=$(echo "$ha_info" | jq -r '.hassos')  MACHINE=$(echo "$ha_info" | jq -r '.machine')  ARCH=$(echo "$ha_info" | jq -r '.arch')"
 
 #### Clean up on exit:
 TTY0_DELETED=""  #Need to set to empty string since runs with nounset=on (like set -u)
