@@ -70,10 +70,28 @@ if [ ! -f /var/lib/dbus/machine-id ]; then
     ln -sf /etc/machine-id /var/lib/dbus/machine-id
 fi
 
-# Créer un faux dbus-launch qui retourne uniquement l'adresse brute du socket
+# Créer un faux dbus-launch et un écouteur de socket UNIX en arrière-plan
 mkdir -p /tmp/bin
 cat << 'EOF' > /tmp/bin/dbus-launch
 #!/bin/bash
+rm -f /tmp/dbus_socket
+python3 -c "
+import socket, os
+try:
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    s.bind('/tmp/dbus_socket')
+    s.listen(5)
+    while True:
+        try:
+            conn, _ = s.accept()
+            conn.recv(1024)
+            conn.close()
+        except:
+            pass
+except:
+    pass
+" &> /dev/null &
+
 printf "unix:path=/tmp/dbus_socket\n"
 exit 0
 EOF
