@@ -159,15 +159,21 @@ export DBUS_SESSION_BUS_TIMEOUT=5000  # Shorten DBUS timeouts
 export GTK_CSD=0                      # Disable client side decorations (???)
 ################################################################################
 #### Start Dbus
-DBUS_SESSION_BUS_ADDRESS=$(dbus-daemon --session --fork --print-address)
+DBUS_SESSION_BUS_ADDRESS=""
+if command -v dbus-daemon &> /dev/null; then
+    DBUS_SESSION_BUS_ADDRESS=$(dbus-daemon --session --fork --print-address)
+else
+    bashio::log.warning "WARNING: dbus-daemon not found in container, skipping..."
+fi
+
 if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
     bashio::log.warning "WARNING: Failed to start dbus-daemon"
+else
+    bashio::log.info "DBus started with: DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS"
+    export DBUS_SESSION_BUS_ADDRESS
+    echo "$DBUS_SESSION_BUS_ADDRESS" >| /tmp/DBUS_SESSION_BUS_ADDRESS
+    echo "export DBUS_SESSION_BUS_ADDRESS='$DBUS_SESSION_BUS_ADDRESS'" >> "$HOME/.profile"
 fi
-bashio::log.info "DBus started with: DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS"
-export DBUS_SESSION_BUS_ADDRESS
-echo "$DBUS_SESSION_BUS_ADDRESS" >| /tmp/DBUS_SESSION_BUS_ADDRESS
-echo "export DBUS_SESSION_BUS_ADDRESS='$DBUS_SESSION_BUS_ADDRESS'" >> "$HOME/.profile"
-
 #### Hack to get writable /dev/tty0 for X
 if [ -e "/dev/tty0" ]; then
     bashio::log.info "Attempting to remount /dev as 'rw' so we can (temporarily) delete /dev/tty0..."
