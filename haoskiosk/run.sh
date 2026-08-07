@@ -1,4 +1,5 @@
 #!/bin/bash
+. /usr/lib/bashio/bashio.sh
 # shellcheck shell=bash
 ################################################################################
 # Add-on: HAOS Kiosk Display (haoskiosk)
