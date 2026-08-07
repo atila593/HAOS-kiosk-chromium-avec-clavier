@@ -70,12 +70,11 @@ if [ ! -f /var/lib/dbus/machine-id ]; then
     ln -sf /etc/machine-id /var/lib/dbus/machine-id
 fi
 
-# Créer un faux dbus-launch robuste pour intercepter tous les arguments
+# Créer un faux dbus-launch sans retour à la ligne parasite
 mkdir -p /tmp/bin
 cat << 'EOF' > /tmp/bin/dbus-launch
 #!/bin/bash
-echo "DBUS_SESSION_BUS_ADDRESS=unix:path=/tmp/dbus_socket"
-echo "DBUS_SESSION_BUS_PID=12345"
+printf "DBUS_SESSION_BUS_ADDRESS=unix:path=/tmp/dbus_socket\nDBUS_SESSION_BUS_PID=12345\n"
 exit 0
 EOF
 chmod +x /tmp/bin/dbus-launch
