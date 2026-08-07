@@ -550,36 +550,43 @@ if [[ "$ONSCREEN_KEYBOARD" = true && -n "$SCREEN_WIDTH" && -n "$SCREEN_HEIGHT" ]
     onboard &
 fi
 
+# Bloc audio rendu non-bloquant : aucun démon pulseaudio/pipewire n'est démarré
+# (seul pulseaudio-utils/pactl est installé), donc pactl échoue toujours ici.
+# On désactive temporairement errexit pour tout ce bloc afin qu'un échec pactl
+# ne tue plus jamais le script (et donc Chromium) via le trap cleanup.
+set +e
+sink=""
 case "$AUDIO_SINK" in
     hdmi)
-        sink=$(pactl list short sinks | awk '/hdmi/ {print $2; exit}')
+        sink=$(pactl list short sinks 2>/dev/null | awk '/hdmi/ {print $2; exit}')
         ;;
     usb)
-        sink=$(pactl list short sinks | awk '/usb|analog/ {print $2; exit}')
+        sink=$(pactl list short sinks 2>/dev/null | awk '/usb|analog/ {print $2; exit}')
         ;;
     none)
-        if ! pactl list short sinks | awk '{print $2}' | grep -qx "null"; then
-            pactl load-module module-null-sink sink_name=null sink_properties=device.description=Null >/dev/null
+        if ! pactl list short sinks 2>/dev/null | awk '{print $2}' | grep -qx "null"; then
+            pactl load-module module-null-sink sink_name=null sink_properties=device.description=Null >/dev/null 2>&1
         fi
         sink=null
         ;;
     *)
-        sink=$(pactl info | awk -F': ' '/Default Sink/ {print $2}')
+        sink=$(pactl info 2>/dev/null | awk -F': ' '/Default Sink/ {print $2}')
         if [ -z "$sink" ]; then
-            sink=$(pactl list short sinks | awk '{print $2; exit}')
+            sink=$(pactl list short sinks 2>/dev/null | awk '{print $2; exit}')
         fi
 esac
 if [ -n "$sink" ]; then
     if pactl set-default-sink "$sink" >& /dev/null; then
         bashio::log.info "Setting default audio sink to: $sink"
     else
-        bashio::log.warning "Failed to set audio sink to: $sink"
+        bashio::log.warning "Failed to set audio sink to: $sink (no audio server running?)"
     fi
 else
-    bashio::log.warning "No audio sink available"
+    bashio::log.warning "No audio sink available (no audio server running?)"
 fi
 echo "Audio Sinks (* = default)"
-pactl list short sinks | awk -v def="$sink" '{prefix = ($2 == def) ? "*" : " "; printf "  %s%s\n", prefix, $0}'
+pactl list short sinks 2>/dev/null | awk -v def="$sink" '{prefix = ($2 == def) ? "*" : " "; printf "  %s%s\n", prefix, $0}'
+set -e
 
 bashio::log.info "Starting Mouse & Touch input gesture command parsing..."
 python3 -u /mouse_touch_inputs.py  -d 1 -w "$COMMAND_WHITELIST" &
