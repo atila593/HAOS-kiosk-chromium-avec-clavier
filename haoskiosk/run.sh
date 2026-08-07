@@ -88,37 +88,27 @@ BROWSER_FLAGS="--no-sandbox --kiosk --disable-infobars --disable-session-crashed
 ################################################################################
 #### Get config variables from HA add-on & set environment variables
 load_config_var() {
-    # First, use existing variable if already set (for debugging purposes)
-    # If not set, lookup configuration value
-    # If null, use optional second parameter or else ""
-    local VAR_NAME="$1"
-    local DEFAULT="${2:-}"
-    local MASK="${3:-}"
+    local var_name="$1"
+    local default_val="$2"
+    local mask="$3"
 
-    local VALUE
-    #Check if $VAR_NAME exists before getting its value since 'set +x' mode
-    if declare -p "$VAR_NAME" >/dev/null 2>&1; then  #Variable exist, get its value
-        VALUE="${!VAR_NAME}"
-    elif bashio::config.exists "${VAR_NAME,,}"; then
-        VALUE="$(bashio::config "${VAR_NAME,,}")"
+    # Lecture directe dans le fichier de configuration local du conteneur (sans API)
+    local val
+    val=$(jq --raw-output --arg key "$var_name" '.[$key] // empty' /data/options.json)
+
+    if [ -z "$val" ]; then
+        val="$default_val"
+        echo "[WARNING] Config key '$var_name' unset, setting to default: '$val'"
     else
-        bashio::log.warning "Unknown config key: ${VAR_NAME,,}"
+        if [ "$mask" = "1" ]; then
+            echo "[INFO] $var_name=XXXXXX"
+        else
+            echo "[INFO] $var_name=$val"
+        fi
     fi
 
-    if [ "$VALUE" = "null" ] || [ -z "$VALUE" ]; then
-        bashio::log.warning "Config key '${VAR_NAME,,}' unset, setting to default: '$DEFAULT'"
-        VALUE="$DEFAULT"
-    fi
-
-    # Assign and export safely using 'printf -v' and 'declare -x'
-    printf -v "$VAR_NAME" '%s' "$VALUE"
-    eval "export $VAR_NAME"
-
-    if [ -z "$MASK" ]; then
-        bashio::log.info "$VAR_NAME=$VALUE"
-    else
-        bashio::log.info "$VAR_NAME=XXXXXX"
-    fi
+    # Exporte la variable pour qu'elle soit dispo dans le script
+    export "$var_name"="$val"
 }
 
 load_config_var HA_USERNAME
