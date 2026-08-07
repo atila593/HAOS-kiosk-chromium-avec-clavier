@@ -70,23 +70,13 @@ if [ ! -f /var/lib/dbus/machine-id ]; then
     ln -sf /etc/machine-id /var/lib/dbus/machine-id
 fi
 
-# Créer un faux dbus-launch pour éviter l'erreur "No such file or directory"
+# Créer un faux dbus-launch robuste pour intercepter tous les arguments
 mkdir -p /tmp/bin
 cat << 'EOF' > /tmp/bin/dbus-launch
 #!/bin/bash
-while [[ "$#" -gt 0 ]]; do
-    case $1 in
-        --sh-syntax|--csh-syntax|--exit-with-session) shift ;;
-        *) break ;;
-    esac
-    shift
-done
-if [ $# -gt 0 ]; then
-    exec "$@"
-else
-    echo "DBUS_SESSION_BUS_ADDRESS=unix:path=/tmp/dbus_socket"
-    echo "DBUS_SESSION_BUS_PID=12345"
-fi
+echo "DBUS_SESSION_BUS_ADDRESS=unix:path=/tmp/dbus_socket"
+echo "DBUS_SESSION_BUS_PID=12345"
+exit 0
 EOF
 chmod +x /tmp/bin/dbus-launch
 export PATH="/tmp/bin:$PATH"
