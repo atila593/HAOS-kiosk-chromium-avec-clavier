@@ -70,7 +70,7 @@ if [ ! -f /var/lib/dbus/machine-id ]; then
     ln -sf /etc/machine-id /var/lib/dbus/machine-id
 fi
 
-# Créer un faux dbus-launch synchronisé avec un écouteur de socket UNIX
+# Créer un faux dbus-launch avec un émulateur de protocole D-Bus en Python
 mkdir -p /tmp/bin
 cat << 'EOF' > /tmp/bin/dbus-launch
 #!/bin/bash
@@ -85,10 +85,18 @@ with open('/tmp/dbus_ready', 'w') as f:
 while True:
     try:
         conn, _ = s.accept()
-        conn.recv(1024)
-        conn.close()
+        # Répondre au protocole de handshake D-Bus initial pour valider la connexion
+        data = conn.recv(1024)
+        if data:
+            conn.sendall(b'OK 1234567890abcdef1234567890abcdef\r\n')
+        while True:
+            chunk = conn.recv(1024)
+            if not chunk:
+                break
+            # Accepter les requêtes sans broncher
+            conn.sendall(b'\r\n')
     except:
-        break
+        pass
 " &> /dev/null &
 
 # Attendre que le socket soit prêt
