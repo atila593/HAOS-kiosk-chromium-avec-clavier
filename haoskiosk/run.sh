@@ -89,8 +89,8 @@ BROWSER_FLAGS="--no-sandbox --kiosk --disable-infobars --disable-session-crashed
 #### Get config variables from HA add-on & set environment variables
 load_config_var() {
     local var_name="$1"
-    local default_val="$2"
-    local mask="$3"
+    local default_val="${2:-}"
+    local mask="${3:-}"
 
     # Lecture directe dans le fichier de configuration local du conteneur (sans API)
     local val
