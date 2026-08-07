@@ -56,6 +56,20 @@
 #     - Launch browser for url: $HA_URL/$HA_DASHBOARD
 #       [If not in DEBUG_MODE; Otherwise, just sleep]
 #
+
+# Générer un machine-id si absent pour éviter le crash de D-Bus
+if [ ! -f /etc/machine-id ]; then
+    if command -v dbus-uuidgen &> /dev/null; then
+        dbus-uuidgen > /etc/machine-id
+    else
+        echo "dad4f339155a4f13a44c3ca4adb2fa13" > /etc/machine-id
+    fi
+fi
+mkdir -p /var/lib/dbus
+if [ ! -f /var/lib/dbus/machine-id ]; then
+    ln -sf /etc/machine-id /var/lib/dbus/machine-id
+fi
+
 ################################################################################
 echo "."  # Almost blank line (Note totally blank or white space lines are swallowed)
 printf '%*s\n' 80 '' | tr ' ' '#'  # Separator
