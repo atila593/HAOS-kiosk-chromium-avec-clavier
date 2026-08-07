@@ -248,6 +248,8 @@ fi
 #### Start Xorg in the background
 rm -rf /tmp/.X*-lock  #Cleanup old versions
 
+export DISPLAY=:0
+
 if [[ -n "$XORG_CONF" && "${XORG_APPEND_REPLACE}" = "replace" ]]; then
     bashio::log.info "Replacing default 'xorg.conf'..."
     echo "${XORG_CONF}" >| /etc/X11/xorg.conf
