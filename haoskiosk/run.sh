@@ -93,8 +93,10 @@ load_config_var() {
     local mask="${3:-}"
 
     # Lecture directe dans le fichier de configuration local du conteneur (sans API)
+    # Convertit le nom de la variable en minuscules pour correspondre aux clés du JSON
+    local json_key="${var_name,,}"
     local val
-    val=$(jq --raw-output --arg key "$var_name" '.[$key] // empty' /data/options.json)
+    val=$(jq --raw-output --arg key "$json_key" '.[$key] // empty' /data/options.json)
 
     if [ -z "$val" ]; then
         val="$default_val"
