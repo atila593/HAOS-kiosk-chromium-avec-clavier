@@ -70,27 +70,31 @@ if [ ! -f /var/lib/dbus/machine-id ]; then
     ln -sf /etc/machine-id /var/lib/dbus/machine-id
 fi
 
-# Créer un faux dbus-launch et un écouteur de socket UNIX en arrière-plan
+# Créer un faux dbus-launch synchronisé avec un écouteur de socket UNIX
 mkdir -p /tmp/bin
 cat << 'EOF' > /tmp/bin/dbus-launch
 #!/bin/bash
-rm -f /tmp/dbus_socket
+rm -f /tmp/dbus_socket /tmp/dbus_ready
 python3 -c "
-import socket, os
-try:
-    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    s.bind('/tmp/dbus_socket')
-    s.listen(5)
-    while True:
-        try:
-            conn, _ = s.accept()
-            conn.recv(1024)
-            conn.close()
-        except:
-            pass
-except:
-    pass
+import socket
+s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+s.bind('/tmp/dbus_socket')
+s.listen(5)
+with open('/tmp/dbus_ready', 'w') as f:
+    f.write('1')
+while True:
+    try:
+        conn, _ = s.accept()
+        conn.recv(1024)
+        conn.close()
+    except:
+        break
 " &> /dev/null &
+
+# Attendre que le socket soit prêt
+while [ ! -f /tmp/dbus_ready ]; do
+    sleep 0.05
+done
 
 printf "unix:path=/tmp/dbus_socket\n"
 exit 0
