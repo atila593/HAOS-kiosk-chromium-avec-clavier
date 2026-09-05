@@ -134,7 +134,7 @@ trap cleanup HUP INT QUIT ABRT TERM EXIT
 ################################################################################
 #### Variables (Modifiées pour Chromium)
 BROWSER="chromium"
-BROWSER_FLAGS="--no-sandbox --kiosk --user-data-dir --disable-infobars --disable-session-crashed-bubble --overscroll-history-navigation=0 --enable-features=UseOzonePlatform --ozone-platform=x11"
+BROWSER_FLAGS="--no-sandbox --kiosk --disable-infobars --disable-session-crashed-bubble --overscroll-history-navigation=0 --enable-features=UseOzonePlatform --ozone-platform=x11 --user-data-dir=/data/chromium-profile --password-store=basic --disable-gpu"
 
 ################################################################################
 #### Get config variables from HA add-on & set environment variables
