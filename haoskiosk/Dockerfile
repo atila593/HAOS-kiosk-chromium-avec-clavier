@@ -50,6 +50,8 @@ RUN apk update && apk add --no-cache \
      scrot \
 ### Full Timezone info
      icu-data-full \
+### D-Bus (session bus for Chromium — évite les erreurs "Could not parse server address")
+     dbus \
 ### Python libraries
 #    py3-pip \
     py3-aiohttp \
